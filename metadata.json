@@ -1,0 +1,6 @@
+{
+  "name": "AI Career Twin",
+  "description": "Enterprise-grade AI career mentor helping students and professionals analyze skills, optimize ATS resumes, predict salaries, and follow personalized learning roadmaps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
