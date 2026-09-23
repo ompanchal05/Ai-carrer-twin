@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Sparkles,
@@ -14,7 +14,9 @@ import {
   Clock,
   ChevronRight,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  Check
 } from 'lucide-react';
 import StatCard from '../../components/Cards/StatCard';
 import GlassCard from '../../components/Cards/GlassCard';
@@ -22,15 +24,23 @@ import RadarChart from '../../components/Charts/RadarChart';
 import LineChart from '../../components/Charts/LineChart';
 import PrimaryButton from '../../components/Buttons/PrimaryButton';
 import SecondaryButton from '../../components/Buttons/SecondaryButton';
+import DropzoneUpload from '../../components/Upload/DropzoneUpload';
 import { useUser } from '../../hooks/useUser';
-import { getCareerRecommendations, getRecentActivities } from '../../services/api';
+import { getCareerRecommendations, getRecentActivities, parseResumeWithAI } from '../../services/api';
 import SpinnerLoader from '../../components/Loader/SpinnerLoader';
+import toast from 'react-hot-toast';
 
 export const DashboardPage = () => {
-  const { profile } = useUser();
+  const { profile, updateProfileData } = useUser();
+  const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Quick Resume Upload Modal State
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,6 +59,34 @@ export const DashboardPage = () => {
     };
     fetchData();
   }, []);
+
+  const handleDashboardResumeSuccess = async (file, base64Data, mimeType, extractedText) => {
+    setIsAnalyzing(true);
+    const toastId = toast.loading('Evaluating PDF with Gemini ATS engine...', { id: 'dash-parse' });
+
+    try {
+      const response = await parseResumeWithAI(extractedText, file.name, profile.targetRole, base64Data, mimeType);
+      const data = response.data;
+      setUploadResult(data);
+
+      // Auto update profile data with new score & skills
+      if (data.detectedSkills && data.detectedSkills.length > 0) {
+        updateProfileData({
+          skills: Array.from(new Set([...profile.skills, ...data.detectedSkills])),
+          atsScore: data.atsScore || profile.atsScore,
+          readinessScore: Math.min(96, Math.max(75, data.atsScore - 4)),
+          name: data.candidateInfo?.name && data.candidateInfo?.name !== 'Candidate' ? data.candidateInfo.name : profile.name
+        });
+      }
+
+      toast.success(`Resume parsed! New ATS Score: ${data.atsScore}/100`, { id: 'dash-parse' });
+    } catch (err) {
+      console.error(err);
+      toast.error('Resume analysis failed. Please try again.', { id: 'dash-parse' });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (loading) {
     return <SpinnerLoader size="lg" text="Loading AI Career Twin Dashboard..." />;
@@ -72,15 +110,34 @@ export const DashboardPage = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/resume-upload">
-              <PrimaryButton icon={Upload} className="py-2.5 text-xs">
-                Upload New Resume
-              </PrimaryButton>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <PrimaryButton
+              icon={Upload}
+              onClick={() => {
+                setUploadResult(null);
+                setShowUploadModal(true);
+              }}
+              className="py-2.5 text-xs shadow-glow"
+            >
+              Upload New Resume
+            </PrimaryButton>
+
+            <Link
+              to="/premium-resume"
+              className="relative group flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-400/60 bg-gradient-to-r from-amber-500/15 via-yellow-500/15 to-amber-500/15 hover:border-amber-300 hover:shadow-[0_0_22px_rgba(251,191,36,0.5)] hover:scale-105 active:scale-95 transition-all text-xs font-black"
+            >
+              <span className="text-amber-400">👑</span>
+              <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                Tailor Resume V2
+              </span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/30">
+                $99/mo
+              </span>
             </Link>
+
             <Link to="/interview-prep">
               <SecondaryButton icon={Video} className="py-2.5 text-xs">
-                Practice Mock Interview
+                Mock Interview
               </SecondaryButton>
             </Link>
           </div>
@@ -218,6 +275,131 @@ export const DashboardPage = () => {
         </div>
 
       </div>
+
+      {/* Quick Resume Upload & Instant ATS Evaluation Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-panel w-full max-w-xl rounded-3xl p-6 sm:p-7 space-y-5 border border-brand-500/30 shadow-2xl animate-in zoom-in-95 bg-white dark:bg-slate-900 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    Quick Resume Upload & Analysis
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Evaluating against target role: <strong>{profile.targetRole}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {!uploadResult ? (
+              <div className="space-y-4">
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  Select or drag any PDF or DOCX file. The Gemini 3.8 ATS engine extracts your skills, evaluates formatting, and computes your live score.
+                </p>
+
+                <DropzoneUpload onUploadSuccess={handleDashboardResumeSuccess} />
+
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span>Want deeper keyword optimization?</span>
+                  <Link
+                    to="/resume-upload"
+                    onClick={() => setShowUploadModal(false)}
+                    className="text-brand-600 dark:text-brand-400 font-bold hover:underline"
+                  >
+                    Open Full ATS Suite →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5 animate-in fade-in-50 duration-300">
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">
+                      Analysis Complete • ATS Pass
+                    </span>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {uploadResult.candidateInfo?.name || profile.name}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {uploadResult.summary}
+                    </p>
+                  </div>
+                  <div className="text-center pl-4 border-l border-emerald-500/20">
+                    <div className="text-3xl font-black text-emerald-500">
+                      {uploadResult.atsScore}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">ATS / 100</span>
+                  </div>
+                </div>
+
+                {/* Score breakdown metrics */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 font-bold block">Keywords</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">{uploadResult.keywordScore}%</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 font-bold block">Formatting</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">{uploadResult.formattingScore}%</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 font-bold block">Impact</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">{uploadResult.impactScore}%</span>
+                  </div>
+                </div>
+
+                {/* Extracted skills */}
+                {uploadResult.detectedSkills && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Detected Technical Skills ({uploadResult.detectedSkills.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                      {uploadResult.detectedSkills.map((sk, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-brand-500/10 text-brand-600 dark:text-brand-400"
+                        >
+                          {sk}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <Link
+                    to="/premium-resume"
+                    onClick={() => setShowUploadModal(false)}
+                    className="w-full sm:flex-1 py-2.5 px-3 rounded-xl text-xs font-black text-amber-950 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-400 hover:from-amber-400 hover:to-yellow-300 text-center flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span>👑 Tailor for JD (Resume V2)</span>
+                  </Link>
+                  <Link
+                    to="/resume-upload"
+                    onClick={() => setShowUploadModal(false)}
+                    className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-center"
+                  >
+                    View Full Audit
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -10,6 +10,12 @@ export const ProfilePage = () => {
   const [formData, setFormData] = useState({ ...profile });
   const [newSkill, setNewSkill] = useState('');
 
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({ ...profile });
+    }
+  }, [profile]);
+
   const handleChange = (field, val) => {
     setFormData((prev) => ({ ...prev, [field]: val }));
   };

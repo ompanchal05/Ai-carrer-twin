@@ -6,6 +6,10 @@ export const initialUserProfile = {
   bio: "Computer Science final year student passionate about Machine Learning, Neural Networks, and scalable Web Applications. Actively looking for AI Engineer and Software Engineer roles in India & globally.",
   location: "Bangalore, Karnataka (Open to Remote)",
   phone: "+91 98765 43210",
+  branch: "Computer Science & AI",
+  cgpa: "9.1 / 10.0",
+  university: "IIT Bombay",
+  graduationYear: "2025",
   education: [
     {
       degree: "B.Tech in Computer Science & Artificial Intelligence",

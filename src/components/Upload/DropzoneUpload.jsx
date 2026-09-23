@@ -57,28 +57,49 @@ export const DropzoneUpload = ({ onUploadSuccess }) => {
   const startAnalysisPipeline = () => {
     if (!file) return;
     setIsUploading(true);
-    setProgress(15);
-    setStatusText("Uploading document securely...");
+    setProgress(20);
+    setStatusText("Reading document binary and structure...");
 
-    setTimeout(() => {
-      setProgress(45);
-      setStatusText("Parsing text layout & extracting skills...");
-    }, 600);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Data = e.target.result;
+      setProgress(60);
+      setStatusText("Extracting skills & evaluating ATS compliance...");
 
-    setTimeout(() => {
-      setProgress(80);
-      setStatusText("Running ATS scoring & neural career matching...");
-    }, 1200);
-
-    setTimeout(() => {
-      setProgress(100);
-      setStatusText("AI Analysis complete!");
-      setIsUploading(false);
-      toast.success("Resume parsed successfully!");
-      if (onUploadSuccess) {
-        onUploadSuccess(file);
+      // Also read as text if readable
+      const textReader = new FileReader();
+      textReader.onload = (te) => {
+        const extractedText = typeof te.target.result === 'string' ? te.target.result : '';
+        setProgress(100);
+        setStatusText("AI Analysis ready!");
+        setIsUploading(false);
+        toast.success(`Parsed ${file.name}!`);
+        if (onUploadSuccess) {
+          onUploadSuccess(file, base64Data, file.type || 'application/pdf', extractedText);
+        }
+      };
+      textReader.onerror = () => {
+        setProgress(100);
+        setIsUploading(false);
+        if (onUploadSuccess) {
+          onUploadSuccess(file, base64Data, file.type || 'application/pdf', '');
+        }
+      };
+      try {
+        textReader.readAsText(file);
+      } catch {
+        setProgress(100);
+        setIsUploading(false);
+        if (onUploadSuccess) {
+          onUploadSuccess(file, base64Data, file.type || 'application/pdf', '');
+        }
       }
-    }, 1800);
+    };
+    reader.onerror = () => {
+      setIsUploading(false);
+      toast.error("Failed to read file.");
+    };
+    reader.readAsDataURL(file);
   };
 
   return (

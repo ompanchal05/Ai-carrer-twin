@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "User profile containing candidate or admin details, credentials, target role, and career metrics",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "photoURL": { "type": "string", "maxLength": 500 },
+        "role": { "type": "string", "maxLength": 50 },
+        "targetRole": { "type": "string", "maxLength": 100 },
+        "college": { "type": "string", "maxLength": 150 },
+        "branch": { "type": "string", "maxLength": 100 },
+        "cgpa": { "type": "number" },
+        "skills": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 60 },
+        "updatedAt": { "type": "string", "maxLength": 60 }
+      },
+      "required": ["uid", "email"]
+    },
+    "resumes": {
+      "title": "Resume Record",
+      "description": "Parsed ATS resume record and evaluations",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "atsScore": { "type": "number" },
+        "targetRole": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "maxLength": 60 }
+      },
+      "required": ["userId", "atsScore"]
+    },
+    "interviews": {
+      "title": "Mock Interview Session",
+      "description": "Interview question evaluation and performance score",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "maxLength": 100 },
+        "score": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 60 }
+      },
+      "required": ["userId", "role", "score"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "User profile document keyed by auth UID"
+    },
+    "/users/{userId}/resumes/{resumeId}": {
+      "schema": "resumes",
+      "description": "Resumes analyzed for this user"
+    },
+    "/users/{userId}/interviews/{interviewId}": {
+      "schema": "interviews",
+      "description": "Mock interview sessions for this user"
+    }
+  }
+}

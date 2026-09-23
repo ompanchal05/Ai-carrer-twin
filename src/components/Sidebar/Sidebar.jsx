@@ -12,24 +12,28 @@ import {
   Video,
   FileText,
   Settings,
-  LogOut
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useUser } from '../../hooks/useUser';
 
 export const Sidebar = ({ isOpen, onClose }) => {
-  const { logout } = useAuth();
+  const { logout, currentRole } = useAuth();
+  const { profile } = useUser();
   const navigate = useNavigate();
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { label: "Twin Profile", path: "/profile", icon: User },
-    { label: "Resume Upload", path: "/resume-upload", icon: Upload, badge: "New" },
-    { label: "Career Match", path: "/career-recommendation", icon: Sparkles, badge: "95%" },
-    { label: "ATS Analysis", path: "/ats-analysis", icon: FileCheck, badge: "92" },
-    { label: "Salary Prediction", path: "/salary-prediction", icon: TrendingUp, badge: "$135k" },
+    { label: "Resume Upload", path: "/resume-upload", icon: Upload, badge: "AI" },
+    { label: "Career & Jobs", path: "/career-recommendation", icon: Sparkles, badge: "Match" },
+    { label: "ATS Analysis", path: "/ats-analysis", icon: FileCheck, badge: `${profile?.atsScore || 92}` },
+    { label: "Salary Prediction", path: "/salary-prediction", icon: TrendingUp },
     { label: "Skill Gap Matrix", path: "/skill-gap", icon: Target },
     { label: "Learning Roadmap", path: "/learning-roadmap", icon: Map },
     { label: "Interview Prep", path: "/interview-prep", icon: Video },
+    { label: "Resume V2 Studio", path: "/premium-resume", icon: Sparkles, badge: "👑 $99/mo", isPremium: true },
     { label: "Career Audit Report", path: "/reports", icon: FileText },
     { label: "Settings", path: "/settings", icon: Settings },
   ];
@@ -65,6 +69,8 @@ export const Sidebar = ({ isOpen, onClose }) => {
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                     isActive
                       ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-l-4 border-brand-500 shadow-sm'
+                      : item.isSpecial
+                      ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                   }`
                 }
@@ -74,7 +80,15 @@ export const Sidebar = ({ isOpen, onClose }) => {
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                      item.isPremium
+                        ? 'bg-amber-400/20 text-amber-600 dark:text-amber-300 border-amber-400/40'
+                        : item.isSpecial
+                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                        : 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20'
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}

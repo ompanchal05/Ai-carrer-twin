@@ -6,6 +6,7 @@ import Footer from '../components/Footer/Footer';
 import MinimalFooter from '../components/MinimalFooter/MinimalFooter';
 import { useAuth } from '../hooks/useAuth';
 import BubbleBackground from '../components/Animations/BubbleBackground';
+import CareerTwinChatbot from '../components/Chatbot/CareerTwinChatbot';
 
 export const MainLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -48,6 +49,9 @@ export const MainLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* 24/7 AI Career Twin Chatbot for Authenticated Users */}
+      {isAuthenticated && <CareerTwinChatbot />}
 
       {isPublicPage ? <Footer /> : <MinimalFooter />}
     </div>

@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Sparkles, Bell, User, LogOut, Settings, Menu, X,
-  ChevronDown, LayoutDashboard, FileText, Briefcase,
-  TrendingUp, BookOpen,
+  Sparkles,
+  Bell,
+  User,
+  LogOut,
+  Settings,
+  Menu,
+  X,
+  ChevronDown,
+  LayoutDashboard,
+  FileText,
+  Briefcase,
+  TrendingUp,
+  BookOpen,
+  ShieldCheck,
+  GraduationCap
 } from 'lucide-react';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { useAuth } from '../../hooks/useAuth';
 import { useUser } from '../../hooks/useUser';
 
-/* ─────────────────────────────── constants ───────────────────────────────── */
 const PUBLIC_NAV = [
   { label: 'Features', href: '/#features' },
   { label: 'How it works', href: '/#how-it-works' },
@@ -18,15 +29,15 @@ const PUBLIC_NAV = [
 
 const APP_NAV = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Resume', href: '/resume', icon: FileText },
-  { label: 'Jobs', href: '/jobs', icon: Briefcase },
-  { label: 'Skills', href: '/skills', icon: TrendingUp },
-  { label: 'Learning', href: '/learning', icon: BookOpen },
+  { label: 'Resume', href: '/resume-upload', icon: FileText },
+  { label: 'Jobs & Match', href: '/career-recommendation', icon: Briefcase },
+  { label: 'Skill Gap', href: '/skill-gap', icon: TrendingUp },
+  { label: 'Roadmap', href: '/learning-roadmap', icon: BookOpen },
+  { label: 'Interview Prep', href: '/interview-prep', icon: GraduationCap },
 ];
 
-/* ─────────────────────────────── component ───────────────────────────────── */
 export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, currentRole, switchRole, logout } = useAuth();
   const { profile } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,14 +49,12 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
   const notifRef = useRef(null);
   const userRef = useRef(null);
 
-  // Shadow on scroll
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
@@ -56,15 +65,21 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
   }, []);
 
   const notifications = [
-    { id: 1, text: 'Your ATS score improved to 92/100!', time: '10m ago', unread: true },
-    { id: 2, text: 'New course recommended for RAG architecture.', time: '1h ago', unread: true },
-    { id: 3, text: 'Weekly salary benchmark updated.', time: '1d ago', unread: false },
+    { id: 1, text: 'ATS Score evaluated at 92/100 by Gemini 3.8!', time: '5m ago', unread: true },
+    { id: 2, text: 'Google India matched 95% with your AI profile.', time: '1h ago', unread: true },
+    { id: 3, text: 'New mock interview evaluation completed.', time: '2h ago', unread: false },
   ];
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const isPublicPage = ['/', '/login', '/register'].includes(location.pathname);
+  const handleRoleToggle = (role) => {
+    switchRole(role);
+    if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
-  /* ──────────────────────────────── render ─────────────────────────────── */
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -74,9 +89,8 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16 gap-6">
-
-          {/* ── Left: Sidebar toggle (auth only) + Brand ── */}
+        <div className="flex items-center h-16 gap-4 sm:gap-6">
+          {/* Left: Sidebar toggle (auth only) + Brand */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {isAuthenticated && (
               <button
@@ -107,22 +121,24 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
             </Link>
           </div>
 
-          {/* ── Center: Nav links ── */}
-          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+          {/* Center: Nav links */}
+          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
             {isAuthenticated
-              ? APP_NAV.map(({ label, href, icon: Icon }) => {
+              ? APP_NAV.map(({ label, href, icon: Icon, isSpecial }) => {
                   const active = location.pathname === href;
                   return (
                     <Link
                       key={href}
                       to={href}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                         active
-                          ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                          ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
+                          : isSpecial
+                          ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-3.5 h-3.5" />
                       {label}
                     </Link>
                   );
@@ -138,8 +154,26 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
                 ))}
           </nav>
 
-          {/* ── Right: Actions ── */}
-          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+          {/* Right: Golden Premium Feature & Actions */}
+          <div className="flex items-center gap-2.5 flex-shrink-0 ml-auto">
+            {/* Golden Premium Feature Button ($99/mo) */}
+            <Link
+              to="/premium-resume"
+              id="premium-nav-btn"
+              className="relative group flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-400/60 bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 hover:border-amber-300 hover:shadow-[0_0_22px_rgba(251,191,36,0.65)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer shadow-sm"
+              title="Enterprise Premium Feature: JD to Resume V2 ($99/mo)"
+            >
+              <span className="text-amber-400 text-sm group-hover:rotate-12 transition-transform duration-300">
+                👑
+              </span>
+              <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent text-xs font-black tracking-wide group-hover:from-yellow-200 group-hover:to-amber-300">
+                Premium
+              </span>
+              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-amber-400/25 text-amber-600 dark:text-amber-300 border border-amber-400/40">
+                $99/mo
+              </span>
+            </Link>
+
             <ThemeToggle />
 
             {isAuthenticated ? (
@@ -148,8 +182,11 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
                 <div className="relative" ref={notifRef}>
                   <button
                     id="notifications-btn"
-                    onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
-                    className="relative p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                    onClick={() => {
+                      setShowNotifications(!showNotifications);
+                      setShowUserMenu(false);
+                    }}
+                    className="relative p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-all duration-200"
                     aria-label="Notifications"
                   >
                     <Bell className="w-5 h-5" />
@@ -164,7 +201,9 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
                   {showNotifications && (
                     <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Notifications</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                          Notifications
+                        </span>
                         {unreadCount > 0 && (
                           <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full">
                             {unreadCount} New
@@ -173,10 +212,19 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
                       </div>
                       <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
                         {notifications.map((item) => (
-                          <div key={item.id} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors">
-                            <div className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.unread ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                          <div
+                            key={item.id}
+                            className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
+                          >
+                            <div
+                              className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                item.unread ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                              }`}
+                            />
                             <div>
-                              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-snug">{item.text}</p>
+                              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-snug">
+                                {item.text}
+                              </p>
                               <span className="text-[10px] text-slate-400 mt-0.5 block">{item.time}</span>
                             </div>
                           </div>
@@ -190,45 +238,75 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
                 <div className="relative" ref={userRef}>
                   <button
                     id="user-menu-btn"
-                    onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-brand-500/30 transition-all duration-200"
+                    onClick={() => {
+                      setShowUserMenu(!showUserMenu);
+                      setShowNotifications(false);
+                    }}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200"
                   >
                     <img
-                      src={profile?.avatar || user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.name || 'User'}`}
+                      src={
+                        profile?.avatar ||
+                        user?.avatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.name || 'User'}`
+                      }
                       alt={profile?.name || user?.name || 'User'}
                       className="w-7 h-7 rounded-lg object-cover ring-2 ring-brand-500/20"
                     />
                     <span className="hidden sm:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">
                       {profile?.name || user?.name || 'Account'}
                     </span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                        showUserMenu ? 'rotate-180' : ''
+                      }`}
+                    />
                   </button>
 
                   {showUserMenu && (
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden">
                       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{profile?.name || 'User'}</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {profile?.name || 'User'}
+                        </p>
                         <p className="text-[10px] text-slate-500 truncate">{profile?.email || user?.email}</p>
+                        <span className="text-[9px] font-extrabold text-brand-600 dark:text-brand-400 uppercase tracking-wider block mt-0.5">
+                          {location.pathname === '/admin' ? 'Placement Admin' : 'Student Mode'}
+                        </span>
                       </div>
                       <div className="p-1.5 space-y-0.5">
                         <Link
                           to="/profile"
                           onClick={() => setShowUserMenu(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-brand-500/8 hover:text-brand-600 dark:hover:text-brand-400 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 rounded-xl transition-colors"
                         >
                           <User className="w-4 h-4" /> My Career Profile
                         </Link>
                         <Link
+                          to="/admin"
+                          onClick={() => {
+                            switchRole('admin');
+                            setShowUserMenu(false);
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-colors"
+                        >
+                          <ShieldCheck className="w-4 h-4" /> Admin Management
+                        </Link>
+                        <Link
                           to="/settings"
                           onClick={() => setShowUserMenu(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-brand-500/8 hover:text-brand-600 dark:hover:text-brand-400 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 rounded-xl transition-colors"
                         >
                           <Settings className="w-4 h-4" /> Settings
                         </Link>
                         <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                         <button
-                          onClick={() => { setShowUserMenu(false); logout(); navigate('/login'); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/8 rounded-xl transition-colors"
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            logout();
+                            navigate('/login');
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
                         >
                           <LogOut className="w-4 h-4" /> Sign Out
                         </button>
@@ -254,7 +332,6 @@ export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
               </div>
             )}
           </div>
-
         </div>
       </div>
     </header>

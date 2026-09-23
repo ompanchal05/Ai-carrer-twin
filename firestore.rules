@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // User profile document
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) 
+        && isValidId(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email is string;
+      allow update: if isOwner(userId) 
+        && isValidId(userId)
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Resumes subcollection
+      match /resumes/{resumeId} {
+        allow read, write: if isOwner(userId) && isValidId(resumeId);
+      }
+
+      // Interviews subcollection
+      match /interviews/{interviewId} {
+        allow read, write: if isOwner(userId) && isValidId(interviewId);
+      }
+    }
+  }
+}
