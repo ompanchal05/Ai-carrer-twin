@@ -168,7 +168,7 @@ PROJECTS:
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400/20 via-yellow-400/20 to-amber-400/20 border border-amber-400/50 text-amber-300 text-xs font-black tracking-wider uppercase shadow-sm">
               <span className="text-amber-400 animate-pulse text-sm">👑</span>
-              <span>Exclusive Enterprise Feature • $99/Month Subscription Active</span>
+              <span>Exclusive VIP Feature • ₹99/Month Subscription Active</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">

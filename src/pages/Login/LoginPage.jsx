@@ -51,7 +51,7 @@ export const LoginPage = () => {
       setEmail('arjun.sharma@iit.ac.in');
       setPassword('CareerTwin2026!');
     } else {
-      setEmail('placement.head@iit.ac.in');
+      setEmail('panchalom136@gmail.com');
       setPassword('AdminPortal2026!');
     }
   };

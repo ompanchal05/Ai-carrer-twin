@@ -64,29 +64,49 @@ export const DropzoneUpload = ({ onUploadSuccess }) => {
     reader.onload = (e) => {
       const base64Data = e.target.result;
       setProgress(60);
-      setStatusText("Extracting skills & evaluating ATS compliance...");
+      setStatusText("ML Classifier analyzing document structure & keywords...");
 
-      // Also read as text if readable
-      const textReader = new FileReader();
-      textReader.onload = (te) => {
-        const extractedText = typeof te.target.result === 'string' ? te.target.result : '';
+      // Extract text content from ArrayBuffer to extract clean ASCII string tokens from PDF/doc streams
+      const bufferReader = new FileReader();
+      bufferReader.onload = (be) => {
+        let cleanExtractedText = '';
+        try {
+          const buffer = be.target.result;
+          const uint8 = new Uint8Array(buffer);
+          let rawChars = '';
+          const maxBytes = Math.min(uint8.length, 120000);
+          for (let i = 0; i < maxBytes; i++) {
+            const code = uint8[i];
+            if ((code >= 32 && code <= 126) || code === 10 || code === 13 || code === 9) {
+              rawChars += String.fromCharCode(code);
+            } else if (rawChars.length > 0 && rawChars[rawChars.length - 1] !== ' ') {
+              rawChars += ' ';
+            }
+          }
+          const words = rawChars.match(/[A-Za-z0-9@._+-]{2,}/g) || [];
+          cleanExtractedText = words.slice(0, 3500).join(' ');
+        } catch (err) {
+          console.warn('Text buffer extraction note:', err);
+        }
+
         setProgress(100);
-        setStatusText("AI Analysis ready!");
+        setStatusText("Ready for ML Verification!");
         setIsUploading(false);
-        toast.success(`Parsed ${file.name}!`);
         if (onUploadSuccess) {
-          onUploadSuccess(file, base64Data, file.type || 'application/pdf', extractedText);
+          onUploadSuccess(file, base64Data, file.type || 'application/pdf', cleanExtractedText);
         }
       };
-      textReader.onerror = () => {
+
+      bufferReader.onerror = () => {
         setProgress(100);
         setIsUploading(false);
         if (onUploadSuccess) {
           onUploadSuccess(file, base64Data, file.type || 'application/pdf', '');
         }
       };
+
       try {
-        textReader.readAsText(file);
+        bufferReader.readAsArrayBuffer(file);
       } catch {
         setProgress(100);
         setIsUploading(false);

@@ -19,9 +19,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUser } from '../../hooks/useUser';
 
 export const Sidebar = ({ isOpen, onClose }) => {
-  const { logout, currentRole } = useAuth();
+  const { logout, user } = useAuth();
   const { profile } = useUser();
   const navigate = useNavigate();
+
+  const isAdmin = (user?.email?.toLowerCase() === 'panchalom136@gmail.com') || (profile?.email?.toLowerCase() === 'panchalom136@gmail.com');
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -33,7 +35,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
     { label: "Skill Gap Matrix", path: "/skill-gap", icon: Target },
     { label: "Learning Roadmap", path: "/learning-roadmap", icon: Map },
     { label: "Interview Prep", path: "/interview-prep", icon: Video },
-    { label: "Resume V2 Studio", path: "/premium-resume", icon: Sparkles, badge: "👑 $99/mo", isPremium: true },
+    { label: "Resume V2 Studio", path: "/premium-resume", icon: Sparkles, badge: "👑 ₹99/mo", isPremium: true },
     { label: "Career Audit Report", path: "/reports", icon: FileText },
     { label: "Settings", path: "/settings", icon: Settings },
   ];
@@ -95,6 +97,33 @@ export const Sidebar = ({ isOpen, onClose }) => {
               </NavLink>
             );
           })}
+
+          {isAdmin && (
+            <div className="pt-2">
+              <div className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-indigo-500 dark:text-indigo-400">
+                Super Admin Terminal
+              </div>
+              <NavLink
+                to="/admin"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                    isActive
+                      ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-l-4 border-indigo-500 shadow-sm'
+                      : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10'
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                  <span>Admin Terminal (Om)</span>
+                </div>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
+                  OTP
+                </span>
+              </NavLink>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Footer Logout */}

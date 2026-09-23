@@ -3,7 +3,29 @@ import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 
 export const ThemeToggle = ({ className = "" }) => {
-  const { isDark, toggleTheme } = useTheme();
+  let isDark = true;
+  let toggleTheme = () => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      if (root.classList.contains('dark')) {
+        root.classList.remove('dark');
+        localStorage.setItem('ai_career_twin_theme', 'light');
+      } else {
+        root.classList.add('dark');
+        localStorage.setItem('ai_career_twin_theme', 'dark');
+      }
+    }
+  };
+
+  try {
+    const themeContext = useTheme();
+    if (themeContext) {
+      isDark = themeContext.isDark;
+      toggleTheme = themeContext.toggleTheme;
+    }
+  } catch (err) {
+    console.warn('ThemeToggle safe theme hook fallback:', err);
+  }
 
   return (
     <button

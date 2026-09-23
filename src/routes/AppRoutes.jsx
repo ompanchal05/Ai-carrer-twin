@@ -22,53 +22,81 @@ import PremiumResumeV2Page from '../pages/PremiumResume/PremiumResumeV2Page';
 import NotFoundPage from '../pages/NotFound/NotFoundPage';
 
 import { useAuth } from '../hooks/useAuth';
+import AuthenticationTransition from '../components/Auth/AuthenticationTransition';
 
-// Protected Route Guard Wrapper
+// Protected Route Guard Wrapper with Authentication Transition
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authLoading, user } = useAuth();
+
+  // If verifying session in background, show the animated transition screen
+  if (authLoading) {
+    return (
+      <AuthenticationTransition
+        title="Getting you in in a few moments..."
+        subtitle="Your authentication is under process. Synchronizing with your AI Career Twin."
+        userName={user?.name}
+      />
+    );
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
 export const AppRoutes = () => {
+  const { authTransitioning, transitionMessage, user, setAuthTransitioning } = useAuth();
+
   return (
-    <Routes>
-      <Route path="/" element={<MainLayout />}>
-        {/* Public Pages */}
-        <Route index element={<LandingPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+    <>
+      {/* Global Animated Authentication Transition Screen */}
+      {authTransitioning && (
+        <AuthenticationTransition
+          title="Getting you in in a few moments..."
+          subtitle={transitionMessage || "Your authentication is under process. Synchronizing with your AI Career Twin."}
+          userName={user?.name}
+          onComplete={() => setAuthTransitioning(false)}
+        />
+      )}
 
-        {/* Protected Dashboard & Feature Pages */}
-        <Route path="dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path="resume-upload" element={<ProtectedRoute><ResumeUploadPage /></ProtectedRoute>} />
-        <Route path="resume" element={<Navigate to="/resume-upload" replace />} />
-        <Route path="career-recommendation" element={<ProtectedRoute><CareerRecommendationPage /></ProtectedRoute>} />
-        <Route path="jobs" element={<Navigate to="/career-recommendation" replace />} />
-        <Route path="ats-analysis" element={<ProtectedRoute><ATSAnalysisPage /></ProtectedRoute>} />
-        <Route path="salary-prediction" element={<ProtectedRoute><SalaryPredictionPage /></ProtectedRoute>} />
-        <Route path="skill-gap" element={<ProtectedRoute><SkillGapPage /></ProtectedRoute>} />
-        <Route path="skills" element={<Navigate to="/skill-gap" replace />} />
-        <Route path="learning-roadmap" element={<ProtectedRoute><LearningRoadmapPage /></ProtectedRoute>} />
-        <Route path="learning" element={<Navigate to="/learning-roadmap" replace />} />
-        <Route path="interview-prep" element={<ProtectedRoute><InterviewPrepPage /></ProtectedRoute>} />
-        <Route path="reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-        <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {/* Public Pages */}
+          <Route index element={<LandingPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
 
-        {/* Premium Feature: JD to Resume V2 ($99/mo) */}
-        <Route path="premium-resume" element={<ProtectedRoute><PremiumResumeV2Page /></ProtectedRoute>} />
-        <Route path="premium" element={<Navigate to="/premium-resume" replace />} />
+          {/* Protected Dashboard & Feature Pages */}
+          <Route path="dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="resume-upload" element={<ProtectedRoute><ResumeUploadPage /></ProtectedRoute>} />
+          <Route path="resume" element={<Navigate to="/resume-upload" replace />} />
+          <Route path="career-recommendation" element={<ProtectedRoute><CareerRecommendationPage /></ProtectedRoute>} />
+          <Route path="jobs" element={<Navigate to="/career-recommendation" replace />} />
+          <Route path="ats-analysis" element={<ProtectedRoute><ATSAnalysisPage /></ProtectedRoute>} />
+          <Route path="salary-prediction" element={<ProtectedRoute><SalaryPredictionPage /></ProtectedRoute>} />
+          <Route path="skill-gap" element={<ProtectedRoute><SkillGapPage /></ProtectedRoute>} />
+          <Route path="skills" element={<Navigate to="/skill-gap" replace />} />
+          <Route path="learning-roadmap" element={<ProtectedRoute><LearningRoadmapPage /></ProtectedRoute>} />
+          <Route path="learning" element={<Navigate to="/learning-roadmap" replace />} />
+          <Route path="interview-prep" element={<ProtectedRoute><InterviewPrepPage /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+          <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
-        {/* Admin Management (FR16 & System Architecture) */}
-        <Route path="admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+          {/* Premium Feature: JD to Resume V2 */}
+          <Route path="premium-resume" element={<ProtectedRoute><PremiumResumeV2Page /></ProtectedRoute>} />
+          <Route path="premium" element={<Navigate to="/premium-resume" replace />} />
 
-        {/* 404 Catch All */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+          {/* Admin Management */}
+          <Route path="admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+
+          {/* 404 Catch All */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 };
 
